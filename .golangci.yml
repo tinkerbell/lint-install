@@ -1,0 +1,148 @@
+# NOTE: This file is populated by the lint-install tool. Local adjustments may be overwritten.
+linters-settings:
+  cyclop:
+    # NOTE: This is a very high transitional threshold
+    max-complexity: 36
+    package-average: 10.0
+    skip-tests: true
+
+  gocognit:
+    # NOTE: This is a very high transitional threshold
+    min-complexity: 98
+
+  dupl:
+    threshold: 200
+
+  goconst:
+    min-len: 4
+    min-occurrences: 5
+    ignore-tests: true
+
+  errorlint:
+    # these are still common in Go: for instance, exit errors.
+    asserts: false
+
+  exhaustive:
+    default-signifies-exhaustive: true
+
+  nestif:
+    min-complexity: 7
+
+  nolintlint:
+      require-explanation: true
+      allow-unused: false
+      require-specific: true
+
+  staticcheck:
+    go: "1.16"
+
+  unused:
+    go: "1.16"
+
+output:
+  sort-results: true
+
+linters:
+  disable-all: true
+  enable:
+    - asciicheck
+    - bodyclose
+    - cyclop
+    - deadcode
+    - dogsled
+    - dupl
+    - durationcheck
+    - errcheck
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forcetypeassert
+    - gocognit
+    - goconst
+    - gocritic
+    - godot
+    - gofmt
+    - goheader
+    - goimports
+    - goprintffuncname
+    - gosimple
+    - govet
+    - ifshort
+    - importas
+    - ineffassign
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - noctx
+    - nolintlint
+    - predeclared
+    - promlinter
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - thelper
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - wastedassign
+    - whitespace
+
+  # Disabled linters, due to being misaligned with Go practices
+  # - exhaustivestruct
+  # - gochecknoglobals
+  # - gochecknoinits
+  # - goconst
+  # - godox
+  # - goerr113
+  # - gomnd
+  # - lll
+  # - nlreturn
+  # - testpackage
+  # - wsl
+
+  # Disabled linters, due to not being relevant to our code base:
+  # - maligned
+  # - prealloc "For most programs usage of prealloc will be a premature optimization."
+
+  # Disabled linters due to bad error messages or bugs
+  # - gofumpt
+  # - gosec
+  # - tagliatelle
+
+
+issues:
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+
+    - path: cmd.*
+      linters:
+        - noctx
+
+    - path: main\.go
+      linters:
+        - noctx
+
+    # This check is of questionable value
+    - linters:
+        - tparallel
+      text: "call t.Parallel on the top level as well as its subtests"
+
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 10
+
+  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
+  max-issues-per-linter: 100
