@@ -2,7 +2,7 @@
 linters-settings:
   cyclop:
     # NOTE: This is a very high transitional threshold
-    max-complexity: 38
+    max-complexity: 37
     package-average: 34.0
     skip-tests: true
 
@@ -26,7 +26,7 @@ linters-settings:
     default-signifies-exhaustive: true
 
   nestif:
-    min-complexity: 10
+    min-complexity: 8
 
   nolintlint:
       require-explanation: true
