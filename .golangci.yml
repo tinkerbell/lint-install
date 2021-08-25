@@ -49,7 +49,6 @@ linters-settings:
       - name: range-val-in-closure
       - name: range-val-address
       - name: dot-imports
-      - name: empty-block
       - name: error-naming
       - name: error-return
       - name: error-strings
@@ -125,7 +124,8 @@ linters:
     - noctx
     - nolintlint
     - predeclared
-    - promlinter
+    # disabling for the initial iteration of the linting tool
+    #- promlinter
     - revive
     - rowserrcheck
     - sqlclosecheck
@@ -182,6 +182,12 @@ issues:
     - path: main\.go
       linters:
         - noctx
+
+    - path: cmd.*
+      text: "deep-exit"
+
+    - path: main\.go
+      text: "deep-exit"
 
     # This check is of questionable value
     - linters:
