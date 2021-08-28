@@ -1,10 +1,10 @@
 
-# BEGIN: lint-install {{.Args}}
+# BEGIN: lint-install .
 # http://github.com/tinkerbell/lint-install
 
-{{ if .Go }}GOLINT_VERSION ?= v1.42.0{{ end }}
-{{ if .Dockerfile}}HADOLINT_VERSION ?= v2.7.0{{ end }}
-{{ if .Shell}}SHELLCHECK_VERSION ?= v0.7.2{{ end }}
+GOLINT_VERSION ?= v1.42.0
+HADOLINT_VERSION ?= v2.7.0
+SHELLCHECK_VERSION ?= v0.7.2
 LINT_OS := $(shell uname)
 LINT_ARCH := $(shell uname -m)
 
@@ -15,32 +15,27 @@ ifeq ($(LINT_OS),Darwin)
 	endif
 endif
 
-{{ if .Shell }}LINT_LOWER_OS  = $(shell echo $(LINT_OS) | tr '[:upper:]' '[:lower:]'){{ end }}
-{{ if .Go }}GOLINT_CONFIG:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/.golangci.yml{{ end }}
+LINT_LOWER_OS  = $(shell echo $(LINT_OS) | tr '[:upper:]' '[:lower:]')
+GOLINT_CONFIG:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/.golangci.yml
 
-lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH){{ end }}
-	{{- range .Commands }}
-	{{ .}}{{ end}}
+lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
+	out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run
+	out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) -t info $(shell find . -name "*Dockerfile")
+	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh")
 
-{{ if .Shell -}}
 out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck:
 	mkdir -p out/linters
 	curl -sSfL https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$(LINT_LOWER_OS).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
 	mv out/linters/shellcheck-$(SHELLCHECK_VERSION) out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
 
-{{ end -}}
-{{ if .Dockerfile -}}
 out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
 	curl -sfL https://github.com/hadolint/hadolint/releases/download/v2.6.1/hadolint-$(LINT_OS)-$(LINT_ARCH) > out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 	chmod u+x out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 
-{{ end -}}
-{{ if .Go -}}
 out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b out/linters $(GOLINT_VERSION)
 	mv out/linters/golangci-lint out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
 
-{{ end -}}
-# END: lint-install {{.Args}}
+# END: lint-install .
