@@ -1,8 +1,13 @@
 # lint-install
 
-Install sanely configured linters to your project.
+[![GoReport Widget]][GoReport Status]
+![](https://img.shields.io/badge/Stability-Experimental-red.svg)
 
-This tool specifically supports creating and updating `Makefile` targets, with configured linters for the following languages:
+[GoReport Status]: https://goreportcard.com/report/github.com/tinkerbell/lint-install
+[GoReport Widget]: https://goreportcard.com/badge/github.com/tinkerbell/lint-install
+
+Install well-configured linters to your project in a consistent and repeatable way. This tool specifically supports creating and updating `Makefile`
+targets, and lints the following:
 
 - Go
 - Shell
@@ -10,13 +15,13 @@ This tool specifically supports creating and updating `Makefile` targets, with c
 
 ## Philosophy
 
-Catch as much as possible, but don't warn about issues that the language authors themselves do not believe in.
+Catch as many errors as possible, but be idiomatic to the language. 
 
 ## Usage
 
 ```
 go get github.com/tinkerbell/lint-install
-lint-install <repo>
+$HOME/go/bin/lint-install <repo>
 ```
 
 ## Options
@@ -25,9 +30,3 @@ lint-install <repo>
 * `--shell=warn`: Make shell warnings non-fatal
 * `--dockerfile=warn`:  Make Dockerfile warnings non-fatal
 * `--go=warn`:  Make Dockerfile warnings non-fatal
-
-## Languages
-
-- Go
-- Shell
-- Dockerfile
