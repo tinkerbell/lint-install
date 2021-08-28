@@ -3,8 +3,8 @@
 # http://github.com/tinkerbell/lint-install
 
 {{ if .Go }}GOLINT_VERSION ?= v1.42.0{{ end }}
-{{- if .Dockerfile}}HADOLINT_VERSION ?= v2.7.0{{ end }}
-{{- if .Shell}}SHELLCHECK_VERSION ?= v0.7.2{{ end }}
+{{ if .Dockerfile}}HADOLINT_VERSION ?= v2.7.0{{ end }}
+{{ if .Shell}}SHELLCHECK_VERSION ?= v0.7.2{{ end }}
 LINT_OS := $(shell uname)
 LINT_ARCH := $(shell uname -m)
 
@@ -25,8 +25,8 @@ lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/s
 {{ if .Shell -}}
 out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck:
 	mkdir -p out/linters
-	curl -sSfL https://github.com/koalaman/shellcheck/releases/download/v0.7.2/shellcheck-$(SHELLCHECK_VERSION).$(LINT_LOWER_OS).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
-	mv shellcheck-$(SHELLCHECK_VERSION) shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
+	curl -sSfL https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$(LINT_LOWER_OS).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
+	mv out/linters/shellcheck-$(SHELLCHECK_VERSION) out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
 
 {{ end -}}
 {{ if .Dockerfile -}}
