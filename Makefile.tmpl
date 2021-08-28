@@ -7,11 +7,11 @@ SHELLCHECK_VERSION ?= v0.7.2
 LINT_OS := $(shell uname)
 LINT_LOWER_OS  = $(shell echo $OS | tr '[:upper:]' '[:lower:]')
 LINT_ARCH := $(shell uname -m)
+GOLINT_CONFIG:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/.golangci.yml
 
 lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION){{ end }}
-	{{ if .Go }}out/linters/golangci-lint-$(GOLINT_VERSION) run{{ if eq .Go "warn" }} || true{{ end }}{{ end }}
-	{{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck $(shell find . -name "*.sh"){{ if eq .Shell "warn" }} || true{{ end }}{{ end }}
-	{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION) $(shell find . -name "*Dockerfile"){{ if eq .Dockerfile "warn" }} || true{{ end }}{{ end }}
+	{{- range .Commands }}
+	{{ .}}{{ end}}
 {{ if .Shell}}
 out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck:
 	mkdir -p out/linters
