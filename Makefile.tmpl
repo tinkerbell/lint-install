@@ -1,21 +1,30 @@
 
 # BEGIN: lint-install {{.Args}}
+# http://github.com/tinkerbell/lint-install
 
-GOLINT_VERSION ?= v1.42.0
-HADOLINT_VERSION ?= v2.6.1
-SHELLCHECK_VERSION ?= v0.7.2
+{{ if .Go }}GOLINT_VERSION ?= v1.42.0{{ end }}
+{{ if .Dockerfile}}HADOLINT_VERSION ?= v2.7.0{{ end }}
+{{ if .Shell}}SHELLCHECK_VERSION ?= v0.7.2{{ end }}
 LINT_OS := $(shell uname)
-LINT_LOWER_OS  = $(shell echo $OS | tr '[:upper:]' '[:lower:]')
 LINT_ARCH := $(shell uname -m)
 
+# shellcheck and hadolint don't have arm64 native binaries: use Rosetta instead
+ifeq ($(LINT_OS),Darwin)
+	ifeq ($(LINT_ARCH),arm64)
+		LINT_ARCH=x86_64
+	endif
+endif
+
+{{ if .Shell }}LINT_LOWER_OS  = $(shell echo $(LINT_OS) | tr '[:upper:]' '[:lower:]'){{ end }}
+{{ if .Go }}GOLINT_CONFIG:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/.golangci.yml{{ end }}
+
 lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION){{ end }}
-	{{ if .Go }}out/linters/golangci-lint-$(GOLINT_VERSION) run{{ if eq .Go "warn" }} || true{{ end }}{{ end }}
-	{{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck $(shell find . -name "*.sh"){{ if eq .Shell "warn" }} || true{{ end }}{{ end }}
-	{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION) $(shell find . -name "*Dockerfile"){{ if eq .Dockerfile "warn" }} || true{{ end }}{{ end }}
+	{{- range .Commands }}
+	{{ .}}{{ end}}
 {{ if .Shell}}
 out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck:
 	mkdir -p out/linters
-	curl -sfL https://github.com/koalaman/shellcheck/releases/download/v0.7.2/shellcheck-$(SHELLCHECK_VERSION).$(LINT_OS).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
+	curl -sfL https://github.com/koalaman/shellcheck/releases/download/v0.7.2/shellcheck-$(SHELLCHECK_VERSION).$(LINT_LOWER_OS).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
 {{- end }}
 {{ if .Dockerfile}}
 out/linters/hadolint-$(HADOLINT_VERSION):

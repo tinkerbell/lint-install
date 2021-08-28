@@ -21,6 +21,7 @@ var (
 	goFlag         = flag.String("go", "error", "Level to lint Go with: [ignore, warn, error]")
 	shellFlag      = flag.String("shell", "error", "Level to lint Shell with: [ignore, warn, error]")
 	dockerfileFlag = flag.String("dockerfile", "error", "Level to lint Dockerfile with: [ignore, warn, error]")
+	makeFileName   = flag.String("makefile", "Makefile", "name of Makefile to update")
 
 	//go:embed .golangci.yml
 	goLintConfig []byte
@@ -38,10 +39,12 @@ const (
 )
 
 type Config struct {
+	Makefile   string
 	Args       string
 	Go         string
 	Dockerfile string
 	Shell      string
+	Commands   []string
 }
 
 // applicableLinters returns a list of languages with known linters within a given directory.
@@ -70,7 +73,7 @@ func applicableLinters(root string) (map[Language]bool, error) {
 
 // updateMakefile updates the Makefile within a project with lint rules.
 func updateMakefile(root string, cfg Config, dryRun bool) (string, error) {
-	dest := filepath.Join(root, "Makefile")
+	dest := filepath.Join(root, cfg.Makefile)
 	var existing []byte
 	var err error
 
@@ -118,6 +121,10 @@ func updateMakefile(root string, cfg Config, dryRun bool) (string, error) {
 		proposed = append(proposed, newRules.Bytes()...)
 	}
 
+	// trim any accidental trailing newlines
+	proposed = bytes.TrimRight(proposed, "\n")
+	proposed = append(proposed, byte('\n'))
+
 	edits := myers.ComputeEdits("Makefile", string(existing), string(proposed))
 	change := gotextdiff.ToUnified(filepath.Base(dest), filepath.Base(dest), string(existing), edits)
 	if !dryRun {
@@ -155,6 +162,55 @@ func updateGoLint(root string, dryRun bool) (string, error) {
 	return fmt.Sprint(change), nil
 }
 
+// goLintCmd returns the appropriate golangci-lint command to run for a project.
+func goLintCmd(root string, level string) string {
+	klog.Infof("Searching for go modules within %s ...", root)
+	found := []string{}
+
+	err := godirwalk.Walk(root, &godirwalk.Options{
+		Callback: func(path string, de *godirwalk.Dirent) error {
+			if strings.HasSuffix(path, "go.mod") {
+				found = append(found, filepath.Dir(path))
+			}
+			return nil
+		},
+		Unsorted: true,
+	})
+
+	if err != nil {
+		klog.Errorf("unable to find go.mod files: %v", err)
+	}
+
+	suffix := ""
+	if level == "warn" {
+		suffix = " || true"
+	}
+
+	if len(found) == 1 && found[0] == root {
+		return fmt.Sprintf("out/linters/golangci-lint-$(GOLINT_VERSION) run%s", suffix)
+	}
+
+	return fmt.Sprintf(`find . -name go.mod | xargs -n1 dirname | xargs -n1 -I{} sh -c "cd {} && golangci-lint run -c $(GOLINT_CONFIG)"%s`, suffix)
+}
+
+// shellLintCmd returns the appropriate shell lint command for a project.
+func shellLintCmd(_ string, level string) string {
+	suffix := ""
+	if level == "warn" {
+		suffix = " || true"
+	}
+	return fmt.Sprintf(`out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck $(shell find . -name "*.sh")%s`, suffix)
+}
+
+// dockerLintCmd returns the appropriate docker lint command for a project.
+func dockerLintCmd(_ string, level string) string {
+	threshold := "info"
+	if level == "warn" {
+		threshold = "none"
+	}
+	return fmt.Sprintf(`out/linters/hadolint-$(HADOLINT_VERSION) -t %s $(shell find . -name "*Dockerfile")`, threshold)
+}
+
 // main creates peanut butter & jelly sandwiches with utmost precision.
 func main() {
 	klog.InitFlags(nil)
@@ -185,16 +241,22 @@ func main() {
 			}
 		}
 
-		cfg := Config{Args: strings.Join(os.Args[1:], " ")}
+		cfg := Config{
+			Args:     strings.Join(os.Args[1:], " "),
+			Makefile: *makeFileName,
+		}
 
 		if needs[Go] {
 			cfg.Go = *goFlag
+			cfg.Commands = append(cfg.Commands, goLintCmd(root, cfg.Go))
 		}
 		if needs[Dockerfile] {
 			cfg.Dockerfile = *dockerfileFlag
+			cfg.Commands = append(cfg.Commands, dockerLintCmd(root, cfg.Dockerfile))
 		}
 		if needs[Shell] {
 			cfg.Shell = *shellFlag
+			cfg.Commands = append(cfg.Commands, shellLintCmd(root, cfg.Shell))
 		}
 
 		diff, err := updateMakefile(root, cfg, *dryRunFlag)
