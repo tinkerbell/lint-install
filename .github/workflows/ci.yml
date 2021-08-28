@@ -24,8 +24,11 @@ jobs:
     - name: Test
       run: go test -v ./...
 
+    - name: Run
+      run: cp Makefile Makefile.old && go run . .
+
     - name: Lint
       run: make lint
 
     - name: Makefile diff
-      run: cp Makefile Makefile.old && go run . . && diff -ubB Makefile.old Makefile
+      run: diff -ubB Makefile.old Makefile
