@@ -187,7 +187,7 @@ func goLintCmd(root string, level string) string {
 	}
 
 	if len(found) == 1 && found[0] == root {
-		return fmt.Sprintf("out/linters/golangci-lint-$(GOLINT_VERSION) run%s", suffix)
+		return fmt.Sprintf("out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run%s", suffix)
 	}
 
 	return fmt.Sprintf(`find . -name go.mod | xargs -n1 dirname | xargs -n1 -I{} sh -c "cd {} && golangci-lint run -c $(GOLINT_CONFIG)"%s`, suffix)
@@ -199,7 +199,7 @@ func shellLintCmd(_ string, level string) string {
 	if level == "warn" {
 		suffix = " || true"
 	}
-	return fmt.Sprintf(`out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck $(shell find . -name "*.sh")%s`, suffix)
+	return fmt.Sprintf(`out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh")%s`, suffix)
 }
 
 // dockerLintCmd returns the appropriate docker lint command for a project.
@@ -208,7 +208,7 @@ func dockerLintCmd(_ string, level string) string {
 	if level == "warn" {
 		threshold = "none"
 	}
-	return fmt.Sprintf(`out/linters/hadolint-$(HADOLINT_VERSION) -t %s $(shell find . -name "*Dockerfile")`, threshold)
+	return fmt.Sprintf(`out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) -t %s $(shell find . -name "*Dockerfile")`, threshold)
 }
 
 // main creates peanut butter & jelly sandwiches with utmost precision.
