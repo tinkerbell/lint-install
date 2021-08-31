@@ -128,7 +128,7 @@ func updateMakefile(root string, cfg Config, dryRun bool) (string, error) {
 	edits := myers.ComputeEdits("Makefile", string(existing), string(proposed))
 	change := gotextdiff.ToUnified(filepath.Base(dest), filepath.Base(dest), string(existing), edits)
 	if !dryRun {
-		if err := os.WriteFile(dest, proposed, 0755); err != nil {
+		if err := os.WriteFile(dest, proposed, 0o755); err != nil {
 			return "", err
 		}
 	}
@@ -154,7 +154,7 @@ func updateGoLint(root string, dryRun bool) (string, error) {
 	change := gotextdiff.ToUnified(filepath.Base(dest), filepath.Base(dest), string(existing), edits)
 
 	if !dryRun {
-		if err := os.WriteFile(dest, goLintConfig, 0755); err != nil {
+		if err := os.WriteFile(dest, goLintConfig, 0o755); err != nil {
 			return "", err
 		}
 	}
@@ -176,7 +176,6 @@ func goLintCmd(root string, level string) string {
 		},
 		Unsorted: true,
 	})
-
 	if err != nil {
 		klog.Errorf("unable to find go.mod files: %v", err)
 	}
