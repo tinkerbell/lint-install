@@ -204,11 +204,12 @@ func shellLintCmd(_ string, level string) string {
 
 // dockerLintCmd returns the appropriate docker lint command for a project.
 func dockerLintCmd(_ string, level string) string {
-	threshold := "info"
+	f := ""
 	if level == "warn" {
-		threshold = "none"
+		f = " --no-fail"
 	}
-	return fmt.Sprintf(`out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) -t %s $(shell find . -name "*Dockerfile")`, threshold)
+
+	return fmt.Sprintf(`out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)%s $(shell find . -name "*Dockerfile")`, f)
 }
 
 // main creates peanut butter & jelly sandwiches with utmost precision.
