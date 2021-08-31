@@ -39,12 +39,13 @@ const (
 )
 
 type Config struct {
-	Makefile   string
-	Args       string
-	Go         string
-	Dockerfile string
-	Shell      string
-	Commands   []string
+	Makefile     string
+	Args         string
+	Go           string
+	Dockerfile   string
+	Shell        string
+	LintCommands []string
+	FixCommands  []string
 }
 
 // applicableLinters returns a list of languages with known linters within a given directory.
@@ -163,7 +164,7 @@ func updateGoLint(root string, dryRun bool) (string, error) {
 }
 
 // goLintCmd returns the appropriate golangci-lint command to run for a project.
-func goLintCmd(root string, level string) string {
+func goLintCmd(root string, level string, fix bool) string {
 	klog.Infof("Searching for go modules within %s ...", root)
 	found := []string{}
 
@@ -181,7 +182,9 @@ func goLintCmd(root string, level string) string {
 	}
 
 	suffix := ""
-	if level == "warn" {
+	if fix {
+		suffix = " --fix"
+	} else if level == "warn" {
 		suffix = " || true"
 	}
 
@@ -193,11 +196,16 @@ func goLintCmd(root string, level string) string {
 }
 
 // shellLintCmd returns the appropriate shell lint command for a project.
-func shellLintCmd(_ string, level string) string {
+func shellLintCmd(_ string, level string, fix bool) string {
 	suffix := ""
-	if level == "warn" {
+
+	if fix {
+		// patch(1) doesn't support patching from stdin on all platforms, so we use git apply instead
+		suffix = " -f diff | git apply -p2 -"
+	} else if level == "warn" {
 		suffix = " || true"
 	}
+
 	return fmt.Sprintf(`out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh")%s`, suffix)
 }
 
@@ -248,15 +256,17 @@ func main() {
 
 		if needs[Go] {
 			cfg.Go = *goFlag
-			cfg.Commands = append(cfg.Commands, goLintCmd(root, cfg.Go))
+			cfg.LintCommands = append(cfg.LintCommands, goLintCmd(root, cfg.Go, false))
+			cfg.FixCommands = append(cfg.FixCommands, goLintCmd(root, cfg.Go, true))
 		}
 		if needs[Dockerfile] {
 			cfg.Dockerfile = *dockerfileFlag
-			cfg.Commands = append(cfg.Commands, dockerLintCmd(root, cfg.Dockerfile))
+			cfg.LintCommands = append(cfg.LintCommands, dockerLintCmd(root, cfg.Dockerfile))
 		}
 		if needs[Shell] {
 			cfg.Shell = *shellFlag
-			cfg.Commands = append(cfg.Commands, shellLintCmd(root, cfg.Shell))
+			cfg.LintCommands = append(cfg.LintCommands, shellLintCmd(root, cfg.Shell, false))
+			cfg.FixCommands = append(cfg.FixCommands, shellLintCmd(root, cfg.Shell, true))
 		}
 
 		diff, err := updateMakefile(root, cfg, *dryRunFlag)
