@@ -191,7 +191,7 @@ func goLintCmd(root string, level string) string {
 		return fmt.Sprintf("out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run%s", suffix)
 	}
 
-	return fmt.Sprintf(`find . -name go.mod | xargs -n1 dirname | xargs -n1 -I{} sh -c "cd {} && out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run -c $(GOLINT_CONFIG)"%s`, suffix)
+	return fmt.Sprintf(`find . -name go.mod | xargs -n1 dirname | xargs -n1 -I{} sh -c "cd {} && $(LINT_ROOT)/out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run -c $(GOLINT_CONFIG)"%s`, suffix)
 }
 
 // shellLintCmd returns the appropriate shell lint command for a project.
