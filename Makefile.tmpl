@@ -19,7 +19,11 @@ endif
 {{ if .Go }}GOLINT_CONFIG:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/.golangci.yml{{ end }}
 
 lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH){{ end }}
-	{{- range .Commands }}
+	{{- range .LintCommands }}
+	{{ .}}{{ end}}
+
+fix: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH){{ end }}
+	{{- range .FixCommands }}
 	{{ .}}{{ end}}
 
 {{ if .Shell -}}
