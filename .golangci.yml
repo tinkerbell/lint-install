@@ -173,10 +173,12 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        - gocyclo
-        - errcheck
         - dupl
+        - errcheck
+        - forcetypeassert
+        - gocyclo
         - gosec
+        - noctx
 
     - path: cmd.*
       linters:
