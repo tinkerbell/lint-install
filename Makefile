@@ -7,6 +7,7 @@ HADOLINT_VERSION ?= v2.7.0
 SHELLCHECK_VERSION ?= v0.7.2
 LINT_OS := $(shell uname)
 LINT_ARCH := $(shell uname -m)
+LINT_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 # shellcheck and hadolint lack arm64 native binaries: rely on x86-64 emulation
 ifeq ($(LINT_OS),Darwin)
@@ -16,7 +17,7 @@ ifeq ($(LINT_OS),Darwin)
 endif
 
 LINT_LOWER_OS  = $(shell echo $(LINT_OS) | tr '[:upper:]' '[:lower:]')
-GOLINT_CONFIG:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/.golangci.yml
+GOLINT_CONFIG:=$(LINT_ROOT)/.golangci.yml
 
 lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
 	out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run

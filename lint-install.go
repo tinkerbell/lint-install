@@ -188,11 +188,12 @@ func goLintCmd(root string, level string, fix bool) string {
 		suffix = " || true"
 	}
 
-	if len(found) == 1 && found[0] == root {
+	klog.Infof("found %d modules within %s: %s", len(found), root, found)
+	if len(found) == 0 || (len(found) == 1 && found[0] == strings.Trim(root, "/")) {
 		return fmt.Sprintf("out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run%s", suffix)
 	}
 
-	return fmt.Sprintf(`find . -name go.mod | xargs -n1 dirname | xargs -n1 -I{} sh -c "cd {} && golangci-lint run -c $(GOLINT_CONFIG)"%s`, suffix)
+	return fmt.Sprintf(`find . -name go.mod -execdir "$(LINT_ROOT)/out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)" run -c "$(GOLINT_CONFIG)"%s \;`, suffix)
 }
 
 // shellLintCmd returns the appropriate shell lint command for a project.
