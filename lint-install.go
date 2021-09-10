@@ -122,7 +122,10 @@ func updateMakefile(root string, cfg Config, dryRun bool) (string, error) {
 		proposed = append(proposed, newRules.Bytes()...)
 	}
 
-	// trim any accidental trailing newlines
+	// Trim extraneous newlines
+	if len(existing) == 0 {
+		proposed = bytes.TrimLeft(proposed, "\n")
+	}
 	proposed = bytes.TrimRight(proposed, "\n")
 	proposed = append(proposed, byte('\n'))
 
