@@ -1,4 +1,3 @@
-
 # BEGIN: lint-install .
 # http://github.com/tinkerbell/lint-install
 
