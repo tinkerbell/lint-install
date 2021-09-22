@@ -18,6 +18,12 @@ linters-settings:
     min-occurrences: 5
     ignore-tests: true
 
+  gosec:
+    excludes:
+      - G107 # Potential HTTP request made with variable url
+      - G204 # Subprocess launched with function call as argument or cmd arguments
+      - G404 # Use of weak random number generator (math/rand instead of crypto/rand
+
   errorlint:
     # these are still common in Go: for instance, exit errors.
     asserts: false
@@ -108,6 +114,8 @@ linters:
     - gocritic
     - godot
     - gofmt
+    - gofumpt
+    - gosec
     - goheader
     - goimports
     - goprintffuncname
@@ -142,37 +150,37 @@ linters:
     - wastedassign
     - whitespace
 
-    # Disabled linters, due to being misaligned with Go practices
-    # - exhaustivestruct
-    # - gochecknoglobals
-    # - gochecknoinits
-    # - goconst
-    # - godox
-    # - goerr113
-    # - gomnd
-    # - lll
-    # - nlreturn
-    # - testpackage
-    # - wsl
-    # Disabled linters, due to not being relevant to our code base:
-    # - maligned
-    # - prealloc "For most programs usage of prealloc will be a premature optimization."
-    # Disabled linters due to bad error messages or bugs
-    # - gofumpt
-    # - gosec
-    # - tagliatelle
+  # Disabled linters, due to being misaligned with Go practices
+  # - exhaustivestruct
+  # - gochecknoglobals
+  # - gochecknoinits
+  # - goconst
+  # - godox
+  # - goerr113
+  # - gomnd
+  # - lll
+  # - nlreturn
+  # - testpackage
+  # - wsl
+  # Disabled linters, due to not being relevant to our code base:
+  # - maligned
+  # - prealloc "For most programs usage of prealloc will be a premature optimization."
+  # Disabled linters due to bad error messages or bugs
+  # - tagliatelle
 
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
     - path: _test\.go
       linters:
-        - gocyclo
-        - errcheck
         - dupl
+        - errcheck
+        - forcetypeassert
+        - gocyclo
         - gosec
+        - noctx
 
-    - path: cmd.*
+    - path: .*cmd.*
       linters:
         - noctx
 
@@ -180,7 +188,7 @@ issues:
       linters:
         - noctx
 
-    - path: cmd.*
+    - path: .*cmd.*
       text: "deep-exit"
 
     - path: main\.go

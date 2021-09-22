@@ -41,13 +41,14 @@ const (
 )
 
 type Config struct {
-	Makefile   string
-	Args       string
-	Go         string
-	Dockerfile string
-	Shell      string
-	YAML       string
-	Commands   []string
+	Makefile     string
+	Args         string
+	Go           string
+	Dockerfile   string
+	Shell        string
+	YAML         string
+	LintCommands []string
+	FixCommands  []string
 }
 
 // applicableLinters returns a list of languages with known linters within a given directory.
@@ -126,14 +127,17 @@ func updateMakefile(root string, cfg Config, dryRun bool) (string, error) {
 		proposed = append(proposed, newRules.Bytes()...)
 	}
 
-	// trim any accidental trailing newlines
+	// Trim extraneous newlines
+	if len(existing) == 0 {
+		proposed = bytes.TrimLeft(proposed, "\n")
+	}
 	proposed = bytes.TrimRight(proposed, "\n")
 	proposed = append(proposed, byte('\n'))
 
 	edits := myers.ComputeEdits("Makefile", string(existing), string(proposed))
 	change := gotextdiff.ToUnified(filepath.Base(dest), filepath.Base(dest), string(existing), edits)
 	if !dryRun {
-		if err := os.WriteFile(dest, proposed, 0755); err != nil {
+		if err := os.WriteFile(dest, proposed, 0o600); err != nil {
 			return "", err
 		}
 	}
@@ -159,7 +163,7 @@ func updateGoLint(root string, dryRun bool) (string, error) {
 	change := gotextdiff.ToUnified(filepath.Base(dest), filepath.Base(dest), string(existing), edits)
 
 	if !dryRun {
-		if err := os.WriteFile(dest, goLintConfig, 0755); err != nil {
+		if err := os.WriteFile(dest, goLintConfig, 0o600); err != nil {
 			return "", err
 		}
 	}
@@ -168,7 +172,7 @@ func updateGoLint(root string, dryRun bool) (string, error) {
 }
 
 // goLintCmd returns the appropriate golangci-lint command to run for a project.
-func goLintCmd(root string, level string) string {
+func goLintCmd(root string, level string, fix bool) string {
 	klog.Infof("Searching for go modules within %s ...", root)
 	found := []string{}
 
@@ -181,39 +185,47 @@ func goLintCmd(root string, level string) string {
 		},
 		Unsorted: true,
 	})
-
 	if err != nil {
 		klog.Errorf("unable to find go.mod files: %v", err)
 	}
 
 	suffix := ""
-	if level == "warn" {
+	if fix {
+		suffix = " --fix"
+	} else if level == "warn" {
 		suffix = " || true"
 	}
 
-	if len(found) == 1 && found[0] == root {
+	klog.Infof("found %d modules within %s: %s", len(found), root, found)
+	if len(found) == 0 || (len(found) == 1 && found[0] == strings.Trim(root, "/")) {
 		return fmt.Sprintf("out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run%s", suffix)
 	}
 
-	return fmt.Sprintf(`find . -name go.mod | xargs -n1 dirname | xargs -n1 -I{} sh -c "cd {} && golangci-lint run -c $(GOLINT_CONFIG)"%s`, suffix)
+	return fmt.Sprintf(`find . -name go.mod -execdir "$(LINT_ROOT)/out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)" run -c "$(GOLINT_CONFIG)"%s \;`, suffix)
 }
 
 // shellLintCmd returns the appropriate shell lint command for a project.
-func shellLintCmd(_ string, level string) string {
+func shellLintCmd(_ string, level string, fix bool) string {
 	suffix := ""
-	if level == "warn" {
+
+	if fix {
+		// patch(1) doesn't support patching from stdin on all platforms, so we use git apply instead
+		suffix = " -f diff | git apply -p2 -"
+	} else if level == "warn" {
 		suffix = " || true"
 	}
+
 	return fmt.Sprintf(`out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh")%s`, suffix)
 }
 
 // dockerLintCmd returns the appropriate docker lint command for a project.
 func dockerLintCmd(_ string, level string) string {
-	threshold := "info"
+	f := ""
 	if level == "warn" {
-		threshold = "none"
+		f = " --no-fail"
 	}
-	return fmt.Sprintf(`out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) -t %s $(shell find . -name "*Dockerfile")`, threshold)
+
+	return fmt.Sprintf(`out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)%s $(shell find . -name "*Dockerfile")`, f)
 }
 
 // yamlLintCmd returns the appropriate yamllint command for a project.
@@ -262,19 +274,21 @@ func main() {
 
 		if needs[Go] {
 			cfg.Go = *goFlag
-			cfg.Commands = append(cfg.Commands, goLintCmd(root, cfg.Go))
+			cfg.LintCommands = append(cfg.LintCommands, goLintCmd(root, cfg.Go, false))
+			cfg.FixCommands = append(cfg.FixCommands, goLintCmd(root, cfg.Go, true))
 		}
 		if needs[Dockerfile] {
 			cfg.Dockerfile = *dockerfileFlag
-			cfg.Commands = append(cfg.Commands, dockerLintCmd(root, cfg.Dockerfile))
+			cfg.LintCommands = append(cfg.LintCommands, dockerLintCmd(root, cfg.Dockerfile))
 		}
 		if needs[Shell] {
 			cfg.Shell = *shellFlag
-			cfg.Commands = append(cfg.Commands, shellLintCmd(root, cfg.Shell))
+			cfg.LintCommands = append(cfg.LintCommands, shellLintCmd(root, cfg.Shell, false))
+			cfg.FixCommands = append(cfg.FixCommands, shellLintCmd(root, cfg.Shell, true))
 		}
 		if needs[YAML] {
 			cfg.YAML = *yamlFlag
-			cfg.Commands = append(cfg.Commands, yamlLintCmd(root, cfg.Shell))
+			cfg.LintCommands = append(cfg.LintCommands, yamlLintCmd(root, cfg.Shell))
 		}
 
 		diff, err := updateMakefile(root, cfg, *dryRunFlag)

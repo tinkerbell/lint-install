@@ -8,6 +8,7 @@
 {{ if .YAML}}YAMLLINT_VERSION ?= 1.26.3{{ end }}
 LINT_OS := $(shell uname)
 LINT_ARCH := $(shell uname -m)
+LINT_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 # shellcheck and hadolint lack arm64 native binaries: rely on x86-64 emulation
 ifeq ($(LINT_OS),Darwin)
@@ -17,11 +18,15 @@ ifeq ($(LINT_OS),Darwin)
 endif
 
 {{ if .Shell }}LINT_LOWER_OS = $(shell echo $(LINT_OS) | tr '[:upper:]' '[:lower:]'){{ end }}
-{{ if .Go }}GOLINT_CONFIG = $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))/.golangci.yml{{ end }}
+{{ if .Go }}GOLINT_CONFIG = $(LINT_ROOT)/.golangci.yml{{ end }}
 {{ if .YAML }}YAMLLINT_ROOT = out/linters/yamllint-$(YAMLLINT_VERSION){{ end }}
 
 lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .YAML}}$(YAMLLINT_ROOT)/bin/yamllint{{ end }}
-	{{- range .Commands }}
+	{{- range .LintCommands }}
+	{{ .}}{{ end}}
+
+fix: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH){{ end }}
+	{{- range .FixCommands }}
 	{{ .}}{{ end}}
 
 {{ if .Shell -}}
@@ -50,7 +55,7 @@ out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 $(YAMLLINT_ROOT)/bin/yamllint:
 	mkdir -p $(YAMLLINT_ROOT)/lib
 	curl -sSfL https://github.com/adrienverge/yamllint/archive/refs/tags/v$(YAMLLINT_VERSION).tar.gz | tar -C out/linters -zxf -
-	cd $(YAMLLINT_ROOT) && PYTHONPATH=lib python setup.py install --prefix . --install-lib lib
+	cd $(YAMLLINT_ROOT) && PYTHONPATH=lib python setup.py -q install --prefix . --install-lib lib
 {{ end -}}
 
 # END: lint-install {{.Args}}
