@@ -1,32 +1,60 @@
 # lint-install
 
 [![GoReport Widget]][GoReport Status]
-![](https://img.shields.io/badge/Stability-Experimental-red.svg)
+[![stability-stable](https://img.shields.io/badge/stability-stable-green.svg)](https://github.com/emersion/stability-badges#stable)
 
 [GoReport Status]: https://goreportcard.com/report/github.com/tinkerbell/lint-install
 [GoReport Widget]: https://goreportcard.com/badge/github.com/tinkerbell/lint-install
 
-Install well-configured linters to your project in a consistent and repeatable way. This tool specifically supports creating and updating `Makefile`
-targets, and lints the following:
+Idiomatic linters for opinionated projects.
+
+This tool installs well-configured linters to any project, open-source or
+otherwise. The linters can be used in a repeatable and consistent way across CI,
+local tests, and IDE's.
+
+lint-install adds linter configuration to the root of your project, and Makefile
+rules to install a consistently versioned set of linters to be used in any
+environment. These Makefile rules can also be upgrading by lint-install, updating
+all environments simultaneously.
+
+Currently supported languages:
 
 - Go
 - Shell
 - Dockerfile
+- YAML
 
 ## Philosophy
 
-Catch as many errors as possible, but be idiomatic to the language. 
+- Catch all the bugs!
+- Improve readability as much as possible.
+- Be idiomatic: only raise issues that the language authors would flag
 
 ## Usage
 
-```
-go get github.com/tinkerbell/lint-install
-$HOME/go/bin/lint-install <repo>
-```
+Installation:
 
-## Options
+`go get github.com/tinkerbell/lint-install`
 
-* `--dry-run`: Log what changes would be made if any
-* `--shell=warn`: Make shell warnings non-fatal
-* `--dockerfile=warn`:  Make Dockerfile warnings non-fatal
-* `--go=warn`:  Make Dockerfile warnings non-fatal
+Add Makefile rules for a git repository:
+
+`$HOME/go/bin/lint-install <repo>`
+
+Users can then lint the project using:
+
+`make lint`
+
+Other options:
+
+  -dockerfile string
+     Level to lint Dockerfile with: [ignore, warn, error] (default "error")
+  -dry-run
+     Display changes to make
+  -go string
+     Level to lint Go with: [ignore, warn, error] (default "error")
+  -makefile string
+     name of Makefile to update (default "Makefile")
+  -shell string
+     Level to lint Shell with: [ignore, warn, error] (default "error")
+  -yaml string
+     Level to lint YAML with: [ignore, warn, error] (default "error")
