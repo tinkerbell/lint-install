@@ -21,6 +21,7 @@ var (
 	goFlag         = flag.String("go", "error", "Level to lint Go with: [ignore, warn, error]")
 	shellFlag      = flag.String("shell", "error", "Level to lint Shell with: [ignore, warn, error]")
 	dockerfileFlag = flag.String("dockerfile", "error", "Level to lint Dockerfile with: [ignore, warn, error]")
+	yamlFlag       = flag.String("yaml", "error", "Level to lint YAML with: [ignore, warn, error]")
 	makeFileName   = flag.String("makefile", "Makefile", "name of Makefile to update")
 
 	//go:embed .golangci.yml
@@ -36,6 +37,7 @@ const (
 	Go Language = iota
 	Shell
 	Dockerfile
+	YAML
 )
 
 type Config struct {
@@ -44,6 +46,7 @@ type Config struct {
 	Go           string
 	Dockerfile   string
 	Shell        string
+	YAML         string
 	LintCommands []string
 	FixCommands  []string
 }
@@ -55,15 +58,17 @@ func applicableLinters(root string) (map[Language]bool, error) {
 
 	err := godirwalk.Walk(root, &godirwalk.Options{
 		Callback: func(path string, de *godirwalk.Dirent) error {
-			if strings.HasSuffix(path, ".go") {
+			switch {
+			case strings.HasSuffix(path, ".go"):
 				found[Go] = true
-			}
-			if strings.HasSuffix(path, "Dockerfile") {
+			case strings.HasSuffix(path, "Dockerfile"):
 				found[Dockerfile] = true
-			}
-			if strings.HasSuffix(path, ".sh") {
+			case strings.HasSuffix(path, ".sh"):
 				found[Shell] = true
+			case strings.HasSuffix(path, ".yml"), strings.HasSuffix(path, ".yaml"):
+				found[YAML] = true
 			}
+
 			return nil
 		},
 		Unsorted: true,
@@ -223,6 +228,15 @@ func dockerLintCmd(_ string, level string) string {
 	return fmt.Sprintf(`out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)%s $(shell find . -name "*Dockerfile")`, f)
 }
 
+// yamlLintCmd returns the appropriate yamllint command for a project.
+func yamlLintCmd(_ string, level string) string {
+	suffix := ""
+	if level == "warn" {
+		suffix = " || true"
+	}
+	return fmt.Sprintf(`PYTHONPATH=$(YAMLLINT_ROOT)/lib $(YAMLLINT_ROOT)/bin/yamllint .%s`, suffix)
+}
+
 // main creates peanut butter & jelly sandwiches with utmost precision.
 func main() {
 	klog.InitFlags(nil)
@@ -271,6 +285,10 @@ func main() {
 			cfg.Shell = *shellFlag
 			cfg.LintCommands = append(cfg.LintCommands, shellLintCmd(root, cfg.Shell, false))
 			cfg.FixCommands = append(cfg.FixCommands, shellLintCmd(root, cfg.Shell, true))
+		}
+		if needs[YAML] {
+			cfg.YAML = *yamlFlag
+			cfg.LintCommands = append(cfg.LintCommands, yamlLintCmd(root, cfg.Shell))
 		}
 
 		diff, err := updateMakefile(root, cfg, *dryRunFlag)

@@ -108,7 +108,7 @@ linters:
     - durationcheck
     - errcheck
     # errname is only available in golangci-lint v1.42.0+ - wait until v1.43 is available to settle
-    #- errname
+    # - errname
     - errorlint
     - exhaustive
     - exportloopref
@@ -137,7 +137,7 @@ linters:
     - nolintlint
     - predeclared
     # disabling for the initial iteration of the linting tool
-    #- promlinter
+    # - promlinter
     - revive
     - rowserrcheck
     - sqlclosecheck
