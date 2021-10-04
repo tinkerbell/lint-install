@@ -21,10 +21,12 @@ endif
 {{ if .Go }}GOLINT_CONFIG = $(LINT_ROOT)/.golangci.yml{{ end }}
 {{ if .YAML }}YAMLLINT_ROOT = out/linters/yamllint-$(YAMLLINT_VERSION){{ end }}
 
+.PHONY: lint
 lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .YAML}}$(YAMLLINT_ROOT)/bin/yamllint{{ end }}
 	{{- range .LintCommands }}
 	{{ .}}{{ end}}
 
+.PHONY: fix
 fix: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH){{ end }}
 	{{- range .FixCommands }}
 	{{ .}}{{ end}}
