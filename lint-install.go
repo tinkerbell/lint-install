@@ -148,7 +148,7 @@ func updateMakefile(root string, cfg Config, dryRun bool) (string, error) {
 	return fmt.Sprint(change), nil
 }
 
-// updateFile updates a configuration file within a project
+// updateFile updates a configuration file within a project.
 func updateFile(root string, basename string, content []byte, dryRun bool) (string, error) {
 	dest := filepath.Join(root, basename)
 	var existing []byte
