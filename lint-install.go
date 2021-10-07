@@ -171,6 +171,47 @@ func updateGoLint(root string, dryRun bool) (string, error) {
 	return fmt.Sprint(change), nil
 }
 
+// updateGitignore updates the .gitignore file within a project to exclude installed linters.
+func updateGitignore(root string, dryRun bool) (string, error) {
+	dest := filepath.Join(root, ".gitignore")
+	var existing []byte
+	var err error
+
+	if _, err = os.Stat(dest); err == nil {
+		klog.Infof("Found existing %s", dest)
+		existing, err = os.ReadFile(dest)
+		if err != nil {
+			return "", err
+		}
+	}
+	proposed := []byte{}
+	found := false
+	for _, line := range bytes.Split(existing, []byte("\n")) {
+		if bytes.Equal(line, []byte("out/")) || bytes.Equal(line, []byte("out")) {
+			found = true
+		}
+		proposed = append(proposed, line...)
+		proposed = append(proposed, []byte("\n")...)
+	}
+
+	if !found {
+		proposed = append(proposed, []byte("# added by lint-install\nout/\n")...)
+	}
+
+	// Trim extra newlines at the end
+	proposed = bytes.TrimRight(proposed, "\n")
+	proposed = append(proposed, byte('\n'))
+
+	edits := myers.ComputeEdits(".gitignore", string(existing), string(proposed))
+	change := gotextdiff.ToUnified(filepath.Base(dest), filepath.Base(dest), string(existing), edits)
+	if !dryRun {
+		if err := os.WriteFile(dest, proposed, 0o600); err != nil {
+			return "", err
+		}
+	}
+	return fmt.Sprint(change), nil
+}
+
 // goLintCmd returns the appropriate golangci-lint command to run for a project.
 func goLintCmd(root string, level string, fix bool) string {
 	klog.Infof("Searching for go modules within %s ...", root)
@@ -299,6 +340,16 @@ func main() {
 			klog.Infof("Makefile changes:\n%s", diff)
 		} else {
 			klog.Infof("Makefile has no changes")
+		}
+
+		diff, err = updateGitignore(root, *dryRunFlag)
+		if err != nil {
+			klog.Exitf("update .gitignore failed: %v", err)
+		}
+		if diff != "" {
+			klog.Infof(".gitignore changes:\n%s", diff)
+		} else {
+			klog.Infof(".gitignore has no changes")
 		}
 	}
 }
