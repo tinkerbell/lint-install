@@ -2,7 +2,7 @@
 # BEGIN: lint-install {{.Args}}
 # http://github.com/tinkerbell/lint-install
 
-{{ if .Go }}GOLINT_VERSION ?= v1.42.0{{ end }}
+{{ if .Go }}GOLINT_VERSION ?= v1.42.1{{ end }}
 {{ if .Dockerfile}}HADOLINT_VERSION ?= v2.7.0{{ end }}
 {{ if .Shell}}SHELLCHECK_VERSION ?= v0.7.2{{ end }}
 {{ if .YAML}}YAMLLINT_VERSION ?= 1.26.3{{ end }}
