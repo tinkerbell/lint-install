@@ -55,9 +55,8 @@ out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 
 {{ if .YAML -}}
 $(YAMLLINT_ROOT)/bin/yamllint:
-	mkdir -p $(YAMLLINT_ROOT)/lib
 	curl -sSfL https://github.com/adrienverge/yamllint/archive/refs/tags/v$(YAMLLINT_VERSION).tar.gz | tar -C out/linters -zxf -
-	cd $(YAMLLINT_ROOT) && PYTHONPATH=lib python setup.py -q install --prefix . --install-lib lib
+	cd $(YAMLLINT_ROOT) && pip3 install . -t dist
 {{ end -}}
 
 # END: lint-install {{.Args}}

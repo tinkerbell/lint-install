@@ -279,7 +279,7 @@ func yamlLintCmd(_ string, level string) string {
 	if level == "warn" {
 		suffix = " || true"
 	}
-	return fmt.Sprintf(`PYTHONPATH=$(YAMLLINT_ROOT)/lib $(YAMLLINT_ROOT)/bin/yamllint .%s`, suffix)
+	return fmt.Sprintf(`PYTHONPATH=$(YAMLLINT_ROOT)/dist $(YAMLLINT_ROOT)/dist/bin/yamllint .%s`, suffix)
 }
 
 // main creates peanut butter & jelly sandwiches with utmost precision.
