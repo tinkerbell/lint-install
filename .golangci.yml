@@ -107,8 +107,7 @@ linters:
     - dupl
     - durationcheck
     - errcheck
-    # errname is only available in golangci-lint v1.42.0+ - wait until v1.43 is available to settle
-    # - errname
+    - errname
     - errorlint
     - exhaustive
     - exportloopref
