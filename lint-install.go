@@ -12,6 +12,7 @@ import (
 
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
+	"github.com/hexops/gotextdiff/span"
 	"github.com/karrick/godirwalk"
 	"k8s.io/klog/v2"
 )
@@ -26,6 +27,9 @@ var (
 
 	//go:embed .golangci.yml
 	goLintConfig []byte
+
+	//go:embed .yamllint
+	yamlLintConfig []byte
 
 	//go:embed Makefile.tmpl
 	makeTmpl string
@@ -144,9 +148,9 @@ func updateMakefile(root string, cfg Config, dryRun bool) (string, error) {
 	return fmt.Sprint(change), nil
 }
 
-// updateGoLint updates the golangci-lint configuration for a project.
-func updateGoLint(root string, dryRun bool) (string, error) {
-	dest := filepath.Join(root, ".golangci.yml")
+// updateFile updates a configuration file within a project.
+func updateFile(root string, basename string, content []byte, dryRun bool) (string, error) {
+	dest := filepath.Join(root, basename)
 	var existing []byte
 	var err error
 
@@ -158,12 +162,12 @@ func updateGoLint(root string, dryRun bool) (string, error) {
 		}
 	}
 
-	proposed := string(goLintConfig)
-	edits := myers.ComputeEdits(".golangci.yml", string(existing), proposed)
-	change := gotextdiff.ToUnified(filepath.Base(dest), filepath.Base(dest), string(existing), edits)
+	proposed := string(content)
+	edits := myers.ComputeEdits(span.URI(basename), string(existing), proposed)
+	change := gotextdiff.ToUnified(basename, basename, string(existing), edits)
 
 	if !dryRun {
-		if err := os.WriteFile(dest, goLintConfig, 0o600); err != nil {
+		if err := os.WriteFile(dest, content, 0o600); err != nil {
 			return "", err
 		}
 	}
@@ -296,18 +300,6 @@ func main() {
 			continue
 		}
 
-		if needs[Go] {
-			diff, err := updateGoLint(root, *dryRunFlag)
-			if err != nil {
-				klog.Exitf("update go lint config failed: %v", err)
-			}
-			if diff != "" {
-				klog.Infof("go lint config changes:\n%s", diff)
-			} else {
-				klog.Infof("go lint config has no changes")
-			}
-		}
-
 		cfg := Config{
 			Args:     strings.Join(os.Args[1:], " "),
 			Makefile: *makeFileName,
@@ -317,6 +309,16 @@ func main() {
 			cfg.Go = *goFlag
 			cfg.LintCommands = append(cfg.LintCommands, goLintCmd(root, cfg.Go, false))
 			cfg.FixCommands = append(cfg.FixCommands, goLintCmd(root, cfg.Go, true))
+
+			diff, err := updateFile(root, ".golangci.yaml", goLintConfig, *dryRunFlag)
+			if err != nil {
+				klog.Exitf("update go lint config failed: %v", err)
+			}
+			if diff != "" {
+				klog.Infof("go lint config changes:\n%s", diff)
+			} else {
+				klog.Infof("go lint config has no changes")
+			}
 		}
 		if needs[Dockerfile] {
 			cfg.Dockerfile = *dockerfileFlag
@@ -330,6 +332,16 @@ func main() {
 		if needs[YAML] {
 			cfg.YAML = *yamlFlag
 			cfg.LintCommands = append(cfg.LintCommands, yamlLintCmd(root, cfg.Shell))
+
+			diff, err := updateFile(root, ".yamllint", yamlLintConfig, *dryRunFlag)
+			if err != nil {
+				klog.Exitf("update yaml lint config failed: %v", err)
+			}
+			if diff != "" {
+				klog.Infof("yamllint config changes:\n%s", diff)
+			} else {
+				klog.Infof("yamllint config has no changes")
+			}
 		}
 
 		diff, err := updateMakefile(root, cfg, *dryRunFlag)
