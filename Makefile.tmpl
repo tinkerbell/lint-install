@@ -22,7 +22,7 @@ endif
 {{ if .YAML }}YAMLLINT_ROOT = out/linters/yamllint-$(YAMLLINT_VERSION){{ end }}
 
 .PHONY: lint
-lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .YAML}}$(YAMLLINT_ROOT)/bin/yamllint{{ end }}
+lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .YAML}}$(YAMLLINT_ROOT)/dist/bin/yamllint{{ end }}
 	{{- range .LintCommands }}
 	{{ .}}{{ end}}
 
@@ -57,7 +57,7 @@ out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 {{ end -}}
 
 {{ if .YAML -}}
-$(YAMLLINT_ROOT)/bin/yamllint:
+$(YAMLLINT_ROOT)/dist/bin/yamllint:
 	mkdir -p out/linters
 	rm -rf out/linters/yamllint-*
 	curl -sSfL https://github.com/adrienverge/yamllint/archive/refs/tags/v$(YAMLLINT_VERSION).tar.gz | tar -C out/linters -zxf -

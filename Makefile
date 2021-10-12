@@ -22,7 +22,7 @@ GOLINT_CONFIG = $(LINT_ROOT)/.golangci.yml
 YAMLLINT_ROOT = out/linters/yamllint-$(YAMLLINT_VERSION)
 
 .PHONY: lint
-lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) $(YAMLLINT_ROOT)/bin/yamllint
+lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) $(YAMLLINT_ROOT)/dist/bin/yamllint
 	out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run
 	out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) $(shell find . -name "*Dockerfile")
 	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh")
@@ -51,7 +51,7 @@ out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b out/linters $(GOLINT_VERSION)
 	mv out/linters/golangci-lint out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
 
-$(YAMLLINT_ROOT)/bin/yamllint:
+$(YAMLLINT_ROOT)/dist/bin/yamllint:
 	mkdir -p out/linters
 	rm -rf out/linters/yamllint-*
 	curl -sSfL https://github.com/adrienverge/yamllint/archive/refs/tags/v$(YAMLLINT_VERSION).tar.gz | tar -C out/linters -zxf -
