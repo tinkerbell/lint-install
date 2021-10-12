@@ -322,7 +322,7 @@ func main() {
 			cfg.LintCommands = append(cfg.LintCommands, goLintCmd(root, cfg.Go, false))
 			cfg.FixCommands = append(cfg.FixCommands, goLintCmd(root, cfg.Go, true))
 
-			diff, err := updateFile(root, ".golangci.yaml", goLintConfig, *dryRunFlag)
+			diff, err := updateFile(root, ".golangci.yml", goLintConfig, *dryRunFlag)
 			if err != nil {
 				klog.Exitf("update go lint config failed: %v", err)
 			}
