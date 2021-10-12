@@ -149,12 +149,13 @@ func updateMakefile(root string, cfg Config, dryRun bool) (string, error) {
 }
 
 // updateFile updates a configuration file within a project.
+// If the content is nil the file is removed.
 func updateFile(root string, basename string, content []byte, dryRun bool) (string, error) {
 	dest := filepath.Join(root, basename)
 	var existing []byte
-	var err error
 
-	if _, err = os.Stat(dest); err == nil {
+	f, err := os.Stat(dest)
+	if err == nil {
 		klog.Infof("Found existing %s", dest)
 		existing, err = os.ReadFile(dest)
 		if err != nil {
@@ -167,7 +168,18 @@ func updateFile(root string, basename string, content []byte, dryRun bool) (stri
 	change := gotextdiff.ToUnified(basename, basename, string(existing), edits)
 
 	if !dryRun {
-		if err := os.WriteFile(dest, content, 0o600); err != nil {
+		var err error
+		if content == nil {
+			// must be broken up, can't be conten == nil && f != nil because then
+			// the else branch will be taken if the file does *not* exist and
+			// an empty file will be written
+			if f != nil {
+				err = os.Remove(dest)
+			}
+		} else {
+			err = os.WriteFile(dest, content, 0o600)
+		}
+		if err != nil {
 			return "", err
 		}
 	}
@@ -310,7 +322,7 @@ func main() {
 			cfg.LintCommands = append(cfg.LintCommands, goLintCmd(root, cfg.Go, false))
 			cfg.FixCommands = append(cfg.FixCommands, goLintCmd(root, cfg.Go, true))
 
-			diff, err := updateFile(root, ".golangci.yaml", goLintConfig, *dryRunFlag)
+			diff, err := updateFile(root, ".golangci.yml", goLintConfig, *dryRunFlag)
 			if err != nil {
 				klog.Exitf("update go lint config failed: %v", err)
 			}
@@ -318,6 +330,16 @@ func main() {
 				klog.Infof("go lint config changes:\n%s", diff)
 			} else {
 				klog.Infof("go lint config has no changes")
+			}
+
+			for _, name := range []string{".golangci.json", ".golangci.toml", ".golangci.yaml"} {
+				diff, err := updateFile(root, name, nil, *dryRunFlag)
+				if err != nil {
+					klog.Exitf("deleting non-standardized go lint config failed: %v", err)
+				}
+				if diff != "" {
+					klog.Infof("standardizing on golangci.yml, deleting %s", name)
+				}
 			}
 		}
 		if needs[Dockerfile] {
