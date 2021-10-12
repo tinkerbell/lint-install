@@ -331,6 +331,16 @@ func main() {
 			} else {
 				klog.Infof("go lint config has no changes")
 			}
+
+			for _, name := range []string{".golangci.json", ".golangci.toml", ".golangci.yaml"} {
+				diff, err := updateFile(root, name, nil, *dryRunFlag)
+				if err != nil {
+					klog.Exitf("deleting non-standardized go lint config failed: %v", err)
+				}
+				if diff != "" {
+					klog.Infof("standardizing on golangci.yml, deleting %s", name)
+				}
+			}
 		}
 		if needs[Dockerfile] {
 			cfg.Dockerfile = *dockerfileFlag
