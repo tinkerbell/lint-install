@@ -49,6 +49,7 @@ out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 	mv out/linters/golangci-lint out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
 
 $(YAMLLINT_ROOT)/bin/yamllint:
+	mkdir -p out/linters
 	curl -sSfL https://github.com/adrienverge/yamllint/archive/refs/tags/v$(YAMLLINT_VERSION).tar.gz | tar -C out/linters -zxf -
 	cd $(YAMLLINT_ROOT) && pip3 install . -t dist
 # END: lint-install .
