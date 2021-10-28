@@ -46,6 +46,7 @@ Users can then lint the project using:
 
 Other options:
 
+```
   -dockerfile string
      Level to lint Dockerfile with: [ignore, warn, error] (default "error")
   -dry-run
@@ -58,3 +59,4 @@ Other options:
      Level to lint Shell with: [ignore, warn, error] (default "error")
   -yaml string
      Level to lint YAML with: [ignore, warn, error] (default "error")
+```
