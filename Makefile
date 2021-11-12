@@ -17,37 +17,33 @@ ifeq ($(LINT_OS),Darwin)
 	endif
 endif
 
-
 SHELLCHECK_VERSION ?= v0.7.2
 out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
 	rm -rf out/linters/shellcheck-*
 	curl -sSfL https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$(LINT_OS_LOWER).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
-	mv out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
+	mv out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck $@
 	rm -rf out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck
-
 HADOLINT_VERSION ?= v2.7.0
 out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
 	rm -rf out/linters/hadolint-*
-	curl -sfL https://github.com/hadolint/hadolint/releases/download/v2.6.1/hadolint-$(LINT_OS)-$(LINT_ARCH) > out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
-	chmod u+x out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
-
-GOLANGCI_LINT_CONFIG = $(LINT_ROOT)/.golangci.yml
+	curl -sfL https://github.com/hadolint/hadolint/releases/download/v2.6.1/hadolint-$(LINT_OS)-$(LINT_ARCH) > $@
+	chmod u+x $@
+GOLANGCI_LINT_CONFIG := $(LINT_ROOT)/.golangci.yml
 GOLANGCI_LINT_VERSION ?= v1.42.1
 out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
 	rm -rf out/linters/golangci-lint-*
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b out/linters $(GOLANGCI_LINT_VERSION)
-	mv out/linters/golangci-lint out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH)
-
+	mv out/linters/golangci-lint $@
 YAMLLINT_VERSION ?= 1.26.3
-YAMLLINT_ROOT = out/linters/yamllint-$(YAMLLINT_VERSION)
+YAMLLINT_ROOT := out/linters/yamllint-$(YAMLLINT_VERSION)
 $(YAMLLINT_ROOT)/dist/bin/yamllint:
 	mkdir -p out/linters
 	rm -rf out/linters/yamllint-*
 	curl -sSfL https://github.com/adrienverge/yamllint/archive/refs/tags/v$(YAMLLINT_VERSION).tar.gz | tar -C out/linters -zxf -
-	cd $(YAMLLINT_ROOT) && pip3 install . -t dist
+	cd $(YAMLLINT_ROOT) && pip3 install --target dist .
 .PHONY: _lint
 _lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH) out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) $(YAMLLINT_ROOT)/dist/bin/yamllint
 	out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) run
