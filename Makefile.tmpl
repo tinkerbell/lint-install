@@ -2,6 +2,9 @@
 # BEGIN: lint-install {{.Args}}
 # http://github.com/tinkerbell/lint-install
 
+.PHONY: lint
+lint: _lint
+
 {{ if .Go }}GOLINT_VERSION ?= v1.42.1{{ end }}
 {{ if .Dockerfile}}HADOLINT_VERSION ?= v2.7.0{{ end }}
 {{ if .Shell}}SHELLCHECK_VERSION ?= v0.7.2{{ end }}
@@ -20,16 +23,6 @@ endif
 
 {{ if .Go }}GOLINT_CONFIG = $(LINT_ROOT)/.golangci.yml{{ end }}
 {{ if .YAML }}YAMLLINT_ROOT = out/linters/yamllint-$(YAMLLINT_VERSION){{ end }}
-
-.PHONY: lint
-lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .YAML}}$(YAMLLINT_ROOT)/dist/bin/yamllint{{ end }}
-	{{- range .LintCommands }}
-	{{ .}}{{ end}}
-
-.PHONY: fix
-fix: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH){{ end }}
-	{{- range .FixCommands }}
-	{{ .}}{{ end}}
 
 {{ if .Shell -}}
 out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck:
@@ -63,5 +56,15 @@ $(YAMLLINT_ROOT)/dist/bin/yamllint:
 	curl -sSfL https://github.com/adrienverge/yamllint/archive/refs/tags/v$(YAMLLINT_VERSION).tar.gz | tar -C out/linters -zxf -
 	cd $(YAMLLINT_ROOT) && pip3 install . -t dist
 {{ end -}}
+
+.PHONY: _lint
+_lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .YAML}}$(YAMLLINT_ROOT)/dist/bin/yamllint{{ end }}
+	{{- range .LintCommands }}
+	{{ .}}{{ end}}
+
+.PHONY: fix
+fix: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH){{ end }}
+	{{- range .FixCommands }}
+	{{ .}}{{ end}}
 
 # END: lint-install {{.Args}}
