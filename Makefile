@@ -6,8 +6,9 @@ GOLINT_VERSION ?= v1.42.1
 HADOLINT_VERSION ?= v2.7.0
 SHELLCHECK_VERSION ?= v0.7.2
 YAMLLINT_VERSION ?= 1.26.3
-LINT_OS := $(shell uname)
 LINT_ARCH := $(shell uname -m)
+LINT_OS := $(shell uname)
+LINT_OS_LOWER := $(shell echo $(LINT_OS) | tr '[:upper:]' '[:lower:]')
 LINT_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 # shellcheck and hadolint lack arm64 native binaries: rely on x86-64 emulation
@@ -17,7 +18,6 @@ ifeq ($(LINT_OS),Darwin)
 	endif
 endif
 
-LINT_LOWER_OS = $(shell echo $(LINT_OS) | tr '[:upper:]' '[:lower:]')
 GOLINT_CONFIG = $(LINT_ROOT)/.golangci.yml
 YAMLLINT_ROOT = out/linters/yamllint-$(YAMLLINT_VERSION)
 
@@ -36,7 +36,7 @@ fix: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/li
 out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck:
 	mkdir -p out/linters
 	rm -rf out/linters/shellcheck-*
-	curl -sSfL https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$(LINT_LOWER_OS).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
+	curl -sSfL https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$(LINT_OS_LOWER).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
 	mv out/linters/shellcheck-$(SHELLCHECK_VERSION) out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
 
 out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH):
