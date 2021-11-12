@@ -266,8 +266,12 @@ func shellLintCmd(_ string, level string, fix bool) string {
 	suffix := ""
 
 	if fix {
-		// patch(1) doesn't support patching from stdin on all platforms, so we use git apply instead
-		suffix = " -f diff | git apply -p2 -"
+		// Use git apply instead of patch(1) because it doesn't support patching from stdin on all platforms.
+		// Everything after the first | is so we don't call git apply if there's nothing to apply, which would cause git apply to return an error.
+		// This is the cross platform way to do what gnu xargs does with its --no-run-if-empty switch.
+		// read -t 1 will read the first line from stdin but timeout after 1 second if empty
+		// if its not empty it will run the rest of the line after && which echoes the line and uses cat to pipe the rest to git
+		suffix = ` -f diff | { read -t 1 line || exit 0; { echo "$$line" && cat; } | git apply -p2; }`
 	} else if level == "warn" {
 		suffix = " || true"
 	}
