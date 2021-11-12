@@ -32,13 +32,13 @@ out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH):
 	curl -sfL https://github.com/hadolint/hadolint/releases/download/v2.6.1/hadolint-$(LINT_OS)-$(LINT_ARCH) > out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 	chmod u+x out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 
-GOLINT_CONFIG = $(LINT_ROOT)/.golangci.yml
-GOLINT_VERSION ?= v1.42.1
-out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
+GOLANGCI_LINT_CONFIG = $(LINT_ROOT)/.golangci.yml
+GOLANGCI_LINT_VERSION ?= v1.42.1
+out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
 	rm -rf out/linters/golangci-lint-*
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b out/linters $(GOLINT_VERSION)
-	mv out/linters/golangci-lint out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b out/linters $(GOLANGCI_LINT_VERSION)
+	mv out/linters/golangci-lint out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH)
 
 YAMLLINT_VERSION ?= 1.26.3
 YAMLLINT_ROOT = out/linters/yamllint-$(YAMLLINT_VERSION)
@@ -48,15 +48,15 @@ $(YAMLLINT_ROOT)/dist/bin/yamllint:
 	curl -sSfL https://github.com/adrienverge/yamllint/archive/refs/tags/v$(YAMLLINT_VERSION).tar.gz | tar -C out/linters -zxf -
 	cd $(YAMLLINT_ROOT) && pip3 install . -t dist
 .PHONY: _lint
-_lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) $(YAMLLINT_ROOT)/dist/bin/yamllint
-	out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run
+_lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) $(YAMLLINT_ROOT)/dist/bin/yamllint
+	out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) run
 	out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) $(shell find . -name "*Dockerfile")
 	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh")
 	PYTHONPATH=$(YAMLLINT_ROOT)/dist $(YAMLLINT_ROOT)/dist/bin/yamllint .
 
 .PHONY: fix
-fix: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
-	out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run --fix
+fix: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH)
+	out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) run --fix
 	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh") -f diff | { read -t 1 line || exit 0; { echo "$$line" && cat; } | git apply -p2; }
 
 # END: lint-install .
