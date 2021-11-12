@@ -5,10 +5,6 @@
 .PHONY: lint
 lint: _lint
 
-{{ if .Go }}GOLINT_VERSION ?= v1.42.1{{ end }}
-{{ if .Dockerfile}}HADOLINT_VERSION ?= v2.7.0{{ end }}
-{{ if .Shell}}SHELLCHECK_VERSION ?= v0.7.2{{ end }}
-{{ if .YAML}}YAMLLINT_VERSION ?= 1.26.3{{ end }}
 LINT_ARCH := $(shell uname -m)
 LINT_OS := $(shell uname)
 LINT_OS_LOWER := $(shell echo $(LINT_OS) | tr '[:upper:]' '[:lower:]')
@@ -21,10 +17,9 @@ ifeq ($(LINT_OS),Darwin)
 	endif
 endif
 
-{{ if .Go }}GOLINT_CONFIG = $(LINT_ROOT)/.golangci.yml{{ end }}
-{{ if .YAML }}YAMLLINT_ROOT = out/linters/yamllint-$(YAMLLINT_VERSION){{ end }}
 
 {{ if .Shell -}}
+SHELLCHECK_VERSION ?= v0.7.2
 out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck:
 	mkdir -p out/linters
 	rm -rf out/linters/shellcheck-*
@@ -33,6 +28,7 @@ out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck:
 
 {{ end -}}
 {{ if .Dockerfile -}}
+HADOLINT_VERSION ?= v2.7.0
 out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
 	rm -rf out/linters/hadolint-*
@@ -41,6 +37,8 @@ out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH):
 
 {{ end -}}
 {{ if .Go -}}
+GOLINT_CONFIG = $(LINT_ROOT)/.golangci.yml
+GOLINT_VERSION ?= v1.42.1
 out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
 	rm -rf out/linters/golangci-lint-*
@@ -50,6 +48,8 @@ out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 {{ end -}}
 
 {{ if .YAML -}}
+YAMLLINT_VERSION ?= 1.26.3
+YAMLLINT_ROOT = out/linters/yamllint-$(YAMLLINT_VERSION)
 $(YAMLLINT_ROOT)/dist/bin/yamllint:
 	mkdir -p out/linters
 	rm -rf out/linters/yamllint-*
