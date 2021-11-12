@@ -20,11 +20,12 @@ endif
 
 {{ if .Shell -}}
 SHELLCHECK_VERSION ?= v0.7.2
-out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck:
+out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
 	rm -rf out/linters/shellcheck-*
 	curl -sSfL https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$(LINT_OS_LOWER).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
-	mv out/linters/shellcheck-$(SHELLCHECK_VERSION) out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
+	mv out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
+	rm -rf out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck
 
 {{ end -}}
 {{ if .Dockerfile -}}
@@ -58,12 +59,12 @@ $(YAMLLINT_ROOT)/dist/bin/yamllint:
 {{ end -}}
 
 .PHONY: _lint
-_lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .YAML}}$(YAMLLINT_ROOT)/dist/bin/yamllint{{ end }}
+_lint: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Dockerfile }}out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) {{ end }}{{ if .YAML}}$(YAMLLINT_ROOT)/dist/bin/yamllint{{ end }}
 	{{- range .LintCommands }}
 	{{ .}}{{ end}}
 
 .PHONY: fix
-fix: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH){{ end }}
+fix: {{ if .Shell }}out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH) {{ end }}{{ if .Go}}out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH){{ end }}
 	{{- range .FixCommands }}
 	{{ .}}{{ end}}
 

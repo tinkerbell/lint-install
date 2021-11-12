@@ -19,11 +19,12 @@ endif
 
 
 SHELLCHECK_VERSION ?= v0.7.2
-out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck:
+out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
 	rm -rf out/linters/shellcheck-*
 	curl -sSfL https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$(LINT_OS_LOWER).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
-	mv out/linters/shellcheck-$(SHELLCHECK_VERSION) out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
+	mv out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
+	rm -rf out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck
 
 HADOLINT_VERSION ?= v2.7.0
 out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH):
@@ -48,15 +49,15 @@ $(YAMLLINT_ROOT)/dist/bin/yamllint:
 	curl -sSfL https://github.com/adrienverge/yamllint/archive/refs/tags/v$(YAMLLINT_VERSION).tar.gz | tar -C out/linters -zxf -
 	cd $(YAMLLINT_ROOT) && pip3 install . -t dist
 .PHONY: _lint
-_lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) $(YAMLLINT_ROOT)/dist/bin/yamllint
+_lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH) out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) $(YAMLLINT_ROOT)/dist/bin/yamllint
 	out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) run
 	out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH) $(shell find . -name "*Dockerfile")
-	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh")
+	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH) $(shell find . -name "*.sh")
 	PYTHONPATH=$(YAMLLINT_ROOT)/dist $(YAMLLINT_ROOT)/dist/bin/yamllint .
 
 .PHONY: fix
-fix: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH)
+fix: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH) out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH)
 	out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) run --fix
-	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh") -f diff | { read -t 1 line || exit 0; { echo "$$line" && cat; } | git apply -p2; }
+	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH) $(shell find . -name "*.sh") -f diff | { read -t 1 line || exit 0; { echo "$$line" && cat; } | git apply -p2; }
 
 # END: lint-install .

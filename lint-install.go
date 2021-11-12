@@ -276,7 +276,7 @@ func shellLintCmd(_ string, level string, fix bool) string {
 		suffix = " || true"
 	}
 
-	return fmt.Sprintf(`out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh")%s`, suffix)
+	return fmt.Sprintf(`out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH) $(shell find . -name "*.sh")%s`, suffix)
 }
 
 // dockerLintCmd returns the appropriate docker lint command for a project.
