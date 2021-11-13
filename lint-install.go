@@ -255,10 +255,10 @@ func goLintCmd(root string, level string, fix bool) string {
 
 	klog.Infof("found %d modules within %s: %s", len(found), root, found)
 	if len(found) == 0 || (len(found) == 1 && found[0] == strings.Trim(root, "/")) {
-		return fmt.Sprintf("out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH) run%s", suffix)
+		return fmt.Sprintf("$(GOLANGCI_LINT_BIN) run%s", suffix)
 	}
 
-	return fmt.Sprintf(`find . -name go.mod -execdir "$(LINT_ROOT)/out/linters/golangci-lint-$(GOLANGCI_LINT_VERSION)-$(LINT_ARCH)" run -c "$(GOLINT_CONFIG)"%s \;`, suffix)
+	return fmt.Sprintf(`find . -name go.mod -execdir "$(GOLANGCI_LINT_BIN)" run -c "$(GOLINT_CONFIG)"%s \;`, suffix)
 }
 
 // shellLintCmd returns the appropriate shell lint command for a project.
@@ -276,7 +276,7 @@ func shellLintCmd(_ string, level string, fix bool) string {
 		suffix = " || true"
 	}
 
-	return fmt.Sprintf(`out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH) $(shell find . -name "*.sh")%s`, suffix)
+	return fmt.Sprintf(`$(SHELLCHECK_BIN) $(shell find . -name "*.sh")%s`, suffix)
 }
 
 // dockerLintCmd returns the appropriate docker lint command for a project.
@@ -286,7 +286,7 @@ func dockerLintCmd(_ string, level string) string {
 		f = " --no-fail"
 	}
 
-	return fmt.Sprintf(`out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)%s $(shell find . -name "*Dockerfile")`, f)
+	return fmt.Sprintf(`$(HADOLINT_BIN)%s $(shell find . -name "*Dockerfile")`, f)
 }
 
 // yamlLintCmd returns the appropriate yamllint command for a project.
