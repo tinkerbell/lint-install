@@ -62,12 +62,12 @@ $(YAMLLINT_BIN):
 
 .PHONY: _lint
 _lint: {{ if .Shell }}$(SHELLCHECK_BIN) {{ end }}{{ if .Dockerfile }}$(HADOLINT_BIN) {{ end }}{{ if .Go}}$(GOLANGCI_LINT_BIN) {{ end }}{{ if .YAML}}$(YAMLLINT_BIN){{ end }}
-	{{- range .LintCommands }}
-	{{ .}}{{ end}}
+	{{- range $k, $v := .LintCommands }}
+	{{ $v }}{{ end}}
 
 .PHONY: fix
 fix: {{ if .Shell }}$(SHELLCHECK_BIN) {{ end }}{{ if .Go}}$(GOLANGCI_LINT_BIN){{ end }}
-	{{- range .FixCommands }}
-	{{ .}}{{ end}}
+	{{- range $k, $v := .FixCommands }}
+	{{ $v }}{{ end}}
 
 # END: lint-install {{.Args}}

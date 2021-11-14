@@ -51,8 +51,8 @@ type Config struct {
 	Dockerfile   string
 	Shell        string
 	YAML         string
-	LintCommands []string
-	FixCommands  []string
+	LintCommands map[string]string
+	FixCommands  map[string]string
 }
 
 // applicableLinters returns a list of languages with known linters within a given directory.
@@ -317,14 +317,16 @@ func main() {
 		}
 
 		cfg := Config{
-			Args:     strings.Join(os.Args[1:], " "),
-			Makefile: *makeFileName,
+			Args:         strings.Join(os.Args[1:], " "),
+			Makefile:     *makeFileName,
+			LintCommands: make(map[string]string),
+			FixCommands:  make(map[string]string),
 		}
 
 		if needs[Go] {
 			cfg.Go = *goFlag
-			cfg.LintCommands = append(cfg.LintCommands, goLintCmd(root, cfg.Go, false))
-			cfg.FixCommands = append(cfg.FixCommands, goLintCmd(root, cfg.Go, true))
+			cfg.LintCommands["golangci-lint"] = goLintCmd(root, cfg.Go, false)
+			cfg.FixCommands["golangci-lint"] = goLintCmd(root, cfg.Go, true)
 
 			diff, err := updateFile(root, ".golangci.yml", goLintConfig, *dryRunFlag)
 			if err != nil {
@@ -348,16 +350,16 @@ func main() {
 		}
 		if needs[Dockerfile] {
 			cfg.Dockerfile = *dockerfileFlag
-			cfg.LintCommands = append(cfg.LintCommands, dockerLintCmd(root, cfg.Dockerfile))
+			cfg.LintCommands["hadolint"] = dockerLintCmd(root, cfg.Dockerfile)
 		}
 		if needs[Shell] {
 			cfg.Shell = *shellFlag
-			cfg.LintCommands = append(cfg.LintCommands, shellLintCmd(root, cfg.Shell, false))
-			cfg.FixCommands = append(cfg.FixCommands, shellLintCmd(root, cfg.Shell, true))
+			cfg.LintCommands["shellcheck"] = shellLintCmd(root, cfg.Shell, false)
+			cfg.FixCommands["shellcheck"] = shellLintCmd(root, cfg.Shell, true)
 		}
 		if needs[YAML] {
 			cfg.YAML = *yamlFlag
-			cfg.LintCommands = append(cfg.LintCommands, yamlLintCmd(root, cfg.Shell))
+			cfg.LintCommands["yamllint"] = yamlLintCmd(root, cfg.Shell)
 
 			diff, err := updateFile(root, ".yamllint", yamlLintConfig, *dryRunFlag)
 			if err != nil {
