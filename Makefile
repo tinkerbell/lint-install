@@ -24,10 +24,13 @@ SHELLCHECK_VERSION ?= v0.8.0
 SHELLCHECK_BIN := out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)
 $(SHELLCHECK_BIN):
 	mkdir -p out/linters
-	rm -rf out/linters/shellcheck-*
-	curl -sSfL https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$(LINT_OS_LOWER).$(LINT_ARCH).tar.xz | tar -C out/linters -xJf -
-	mv out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck $@
-	rm -rf out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck
+	curl -sSfL -o $@.tar.xz https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$(LINT_OS_LOWER).$(LINT_ARCH).tar.xz \
+		|| echo "Unable to fetch shellcheck for $(LINT_OS)/$(LINT_ARCH): falling back to locally install"
+	test -f $@.tar.xz \
+		&& tar -C out/linters -xJf - \
+		&& mv out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck $@ \
+		|| printf "#!/usr/bin/env shellcheck\n" > $@
+	chmod u+x $@
 
 LINTERS += shellcheck-lint
 shellcheck-lint: $(SHELLCHECK_BIN)
@@ -41,8 +44,9 @@ HADOLINT_VERSION ?= v2.8.0
 HADOLINT_BIN := out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 $(HADOLINT_BIN):
 	mkdir -p out/linters
-	rm -rf out/linters/hadolint-*
-	curl -sfL https://github.com/hadolint/hadolint/releases/download/v2.6.1/hadolint-$(LINT_OS)-$(LINT_ARCH) > $@
+	curl -o $@.dl -sfL https://github.com/hadolint/hadolint/releases/download/v2.6.1/hadolint-$(LINT_OS)-$(LINT_ARCH) \
+		|| echo "Unable to fetch hadolint for $(LINT_OS)/$(LINT_ARCH), falling back to local install"
+	test -f $@.dl && mv $(HADOLINT_BIN).dl $@ || printf "#!/usr/bin/env hadolint\n" > $@
 	chmod u+x $@
 
 LINTERS += hadolint-lint
@@ -73,7 +77,7 @@ $(YAMLLINT_BIN):
 	mkdir -p out/linters
 	rm -rf out/linters/yamllint-*
 	curl -sSfL https://github.com/adrienverge/yamllint/archive/refs/tags/v$(YAMLLINT_VERSION).tar.gz | tar -C out/linters -zxf -
-	cd $(YAMLLINT_ROOT) && pip3 install --target dist .
+	cd $(YAMLLINT_ROOT) && pip3 install --target dist . || pip install --target dist .
 
 LINTERS += yamllint-lint
 yamllint-lint: $(YAMLLINT_BIN)
