@@ -28,7 +28,7 @@ $(SHELLCHECK_BIN):
 	curl -sSfL -o $@.tar.xz https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).$(LINT_OS_LOWER).$(LINT_ARCH).tar.xz \
 		|| echo "Unable to fetch shellcheck for $(LINT_OS)/$(LINT_ARCH): falling back to locally install"
 	test -f $@.tar.xz \
-		&& tar -C out/linters -xJf - \
+		&& tar -C out/linters -xJf $@.tar.xz \
 		&& mv out/linters/shellcheck-$(SHELLCHECK_VERSION)/shellcheck $@ \
 		|| printf "#!/usr/bin/env shellcheck\n" > $@
 	chmod u+x $@
