@@ -258,7 +258,7 @@ func goLintCmd(root string, level string, fix bool) string {
 		return fmt.Sprintf("$(GOLANGCI_LINT_BIN) run%s", suffix)
 	}
 
-	return fmt.Sprintf(`find . -name go.mod -execdir "$(GOLANGCI_LINT_BIN)" run -c "$(GOLINT_CONFIG)"%s \;`, suffix)
+	return fmt.Sprintf(`find . -name go.mod -execdir "$(CURDIR)/$(GOLANGCI_LINT_BIN)" run -c "$(GOLINT_CONFIG)"%s \;`, suffix)
 }
 
 // shellLintCmd returns the appropriate shell lint command for a project.
