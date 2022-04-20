@@ -31,6 +31,10 @@ linters-settings:
   errorlint:
     # these are still common in Go: for instance, exit errors.
     asserts: false
+    # Forcing %w in error wrapping forces authors to make errors part of their package APIs. The decision to make
+    # an error part of a package API should be a concious decision by the author.
+    # Also see Hyrums Law.
+    errorf: false
 
   exhaustive:
     default-signifies-exhaustive: true
