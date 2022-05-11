@@ -254,11 +254,7 @@ func goLintCmd(root string, level string, fix bool) string {
 	}
 
 	klog.Infof("found %d modules within %s: %s", len(found), root, found)
-	if len(found) == 0 || (len(found) == 1 && found[0] == strings.Trim(root, "/")) {
-		return fmt.Sprintf("$(GOLANGCI_LINT_BIN) run%s", suffix)
-	}
-
-	return fmt.Sprintf(`find . -name go.mod -execdir "$(GOLANGCI_LINT_BIN)" run -c "$(GOLINT_CONFIG)"%s \;`, suffix)
+	return fmt.Sprintf(`find . -name go.mod -execdir "$(GOLANGCI_LINT_BIN)" run -c "$(GOLANGCI_LINT_CONFIG)"%s \;`, suffix)
 }
 
 // shellLintCmd returns the appropriate shell lint command for a project.
